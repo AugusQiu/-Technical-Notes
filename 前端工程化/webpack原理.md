@@ -5,7 +5,9 @@
   tapable 构建流程管控
 
 2. 抽象语法树
-   状态机、正则匹配  构建AST树
+   状态机（循环遍历字符，会用正则匹配单个字符）、正则匹配（匹配一长串）  构建AST树
+       vue2 模板解析就是基于正则匹配 => vue3就是状态机了
+       区别在于 正则表达式匹配时会回溯，回溯直到匹配前会一直尝试，影响性能
    代码编译流程 
 
 3. bundle、最新bundleless原理
@@ -99,4 +101,40 @@ var a = 1 + 2 + 3
 
 => 重新生成兼容代码 
 ````
-AST在线转换：astexplorer.net 
+AST在线转换网址：astexplorer.net 
+
+
+### tree-shaking原理
+import、export静态依赖分析  
+**为什么Common.js的require就不行？**  
+````js
+// require是动态导入的，你甚至可以在判断语句里require
+let dynamicModule;
+if (condition) {
+  myDynamicModule = require("foo");
+} else {
+  myDynamicModule = require("bar");
+}
+// 在实际运行前, CommonJS无法确定需要或者不需要哪些模块，也就是说执行行了才知道
+
+
+// import是完全静态导入的语法，意味着在判断语句里 import导入 是不可行的
+if (condition) {
+  myDynamicModule = import("foo");
+} else {
+  myDynamicModule = import("bar");
+}
+
+// 所以我们只能先在顶部声明要全部导入的哪些包，再判断用哪个
+import foo from "foo";
+import bar from "bar";
+
+// 基于字面量分析，就能在代码不被运行的情况下分析出哪些模块被引用
+if (condition) {
+  // foo.xxxx
+} else {
+  // bar.xxx
+}
+````
+从底层AST语法树的角度看，import语句的 ast node类型为 ImportDeclaration  
+
